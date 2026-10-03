@@ -1,0 +1,109 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>cady</title><link rel="stylesheet" href="./styles.css?v=sidebar-1"><link rel="stylesheet" href="./guide.css"><link rel="stylesheet" href="./drafting.css"></head><body>
+<button class="open-cady" id="open-cady">open cady</button>
+<main class="workspace" id="workspace" aria-hidden="true">
+  <section class="cad-canvas" id="cad-canvas" aria-label="Interactive 3D CAD modeling canvas"></section>
+  <header class="command-bar" aria-label="Design commands">
+    <span class="command-context">Design</span>
+    <nav aria-label="Create geometry"><button id="new-sketch" type="button">Sketch</button><button id="insert-reference" type="button">Reference</button><button data-model-action="box" type="button">Box</button><button data-model-action="cylinder" type="button">Cylinder</button><button data-model-action="sphere" type="button">Sphere</button></nav>
+    <i></i>
+    <nav aria-label="Transform geometry"><button data-model-action="move" type="button">Move</button><button data-model-action="rotate" type="button">Rotate</button><button data-model-action="scale" type="button">Scale</button></nav>
+    <i></i>
+    <nav aria-label="History"><button id="undo-model" type="button" disabled>Undo</button><button id="redo-model" type="button" disabled>Redo</button></nav><i></i>
+    <nav aria-label="Project outputs"><button id="export-step" type="button">STEP</button><button id="top-drafting" type="button">Drawing</button><button data-model-action="solidworks" type="button">SolidWorks</button></nav>
+  </header>
+  <nav class="cad-actions" aria-label="Viewport controls"><button id="start-guide" type="button">Show me how</button><button id="fit-view" type="button">Fit view</button><button id="show-all" type="button">Show all</button></nav>
+  <nav class="view-cube" aria-label="Standard camera views">
+    <button class="cube-face cube-top" data-view="top" type="button" aria-label="Top view">TOP</button>
+    <button class="cube-face cube-front" data-view="front" type="button" aria-label="Front view">FRONT</button>
+    <button class="cube-face cube-right" data-view="right" type="button" aria-label="Right view">RIGHT</button>
+  </nav>
+  <aside class="transform-panel" id="transform-panel" aria-label="Transform coordinates"><p>Position</p><label>X <input data-axis="x" type="number" step="0.1" value="0"></label><label>Y <input data-axis="y" type="number" step="0.1" value="0"></label><label>Z <input data-axis="z" type="number" step="0.1" value="0"></label></aside>
+  <section class="sketch-workspace" id="sketch-workspace" hidden aria-label="2D sketch editor">
+    <header><div><span>Sketch 01</span><strong>Top plane</strong></div><nav aria-label="Sketch tools"><button class="active" data-sketch-tool="rectangle" type="button">Rectangle</button><button data-sketch-tool="circle" type="button">Circle</button><button data-sketch-tool="line" type="button">Line</button><button data-sketch-tool="arc" type="button">Arc</button></nav><div><button id="cancel-sketch" type="button">Cancel</button><button class="finish-sketch" id="finish-sketch" type="button">Finish sketch</button></div></header>
+    <div class="sketch-stage"><svg id="sketch-svg" viewBox="0 0 1000 700" role="img" aria-label="Sketch canvas"><defs><pattern id="small-grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#dfe2df" stroke-width="1"/></pattern><pattern id="large-grid" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="url(#small-grid)"/><path d="M100 0H0V100" fill="none" stroke="#c9cdca" stroke-width="1"/></pattern></defs><rect width="1000" height="700" fill="url(#large-grid)"/><path class="sketch-axis" d="M0 350H1000M500 0V700"/><g id="sketch-entities"></g><g id="sketch-preview"></g></svg><p class="sketch-hint" id="sketch-hint">Drag to draw a constrained rectangle</p></div>
+    <aside class="sketch-inspector"><p>Profile dimensions</p><label>Width <span><input id="sketch-width" type="number" min="0.1" step="0.1" value="60"> mm</span></label><label>Depth <span><input id="sketch-depth" type="number" min="0.1" step="0.1" value="40"> mm</span></label><label>Radius <span><input id="sketch-radius" type="number" min="0.1" step="0.1" value="20"> mm</span></label><label>Extrude <span><input id="sketch-extrude" type="number" min="0.1" step="0.1" value="10"> mm</span></label><p>Constraints</p><ul><li>Horizontal</li><li>Vertical</li><li>Coincident</li><li id="sketch-status">Fully defined</li></ul></aside>
+  </section>
+  <dialog class="reference-dialog" id="reference-dialog">
+    <form method="dialog">
+      <header><div><p>Reference canvas</p><span>Place and calibrate a blueprint</span></div><button value="cancel" type="submit" aria-label="Close reference canvas">×</button></header>
+      <label class="reference-file">Image<input id="reference-file" type="file" accept="image/png,image/jpeg,image/webp"></label>
+      <div class="reference-grid">
+        <label>Plane<select id="reference-plane"><option value="side">Side</option><option value="front">Front</option><option value="top">Top</option></select></label>
+        <label>Known length <span><input id="reference-length" type="number" min="1" step="1" value="1000"> mm</span></label>
+        <label>Opacity <input id="reference-opacity" type="range" min="0.1" max="1" step="0.05" value="0.5"></label>
+        <label>Offset <span><input id="reference-offset" type="number" step="1" value="0"> mm</span></label>
+        <label>Rotation <span><input id="reference-rotation" type="number" step="1" value="0">°</span></label>
+        <label>Scale <span><input id="reference-scale" type="number" min="0.01" step="0.01" value="1">×</span></label>
+      </div>
+      <p class="reference-hint">The known length calibrates the image width. Use offset to separate side, front, and top canvases.</p>
+      <footer><button value="cancel" type="submit">Cancel</button><button class="reference-place" id="reference-place" value="default" type="submit">Place canvas</button></footer>
+    </form>
+  </dialog>
+  <button class="hub-toggle" id="hub-toggle" type="button" aria-label="Open hub"><svg viewBox="0 0 20 20"><path d="M3.5 9.2L10 3.7l6.5 5.5v7.1h-4.3v-4H7.8v4H3.5z"/></svg></button>
+  <section class="hub-view" id="hub-view" aria-label="Cady hub">
+    <aside class="hub-nav">
+      <p class="hub-brand">cady</p>
+      <nav><button id="new-file" type="button">New file</button><button id="new-project" type="button">New project</button></nav>
+      <p class="hub-label">Projects</p>
+      <div class="project-tree" id="project-tree"></div>
+    </aside>
+    <div class="hub-content">
+      <header><div><p>Home</p><h1>Your CAD workspace</h1></div><button id="back-to-cad" type="button">Back to CAD</button></header>
+      <section class="drawing-grid" id="drawing-grid"></section>
+    </div>
+  </section>
+  <aside class="feature-panel" aria-label="CAD feature history">
+    <nav class="inspector-tabs" aria-label="Sidebar sections"><button class="active" data-sidebar-tab="model" type="button">Model</button><button data-sidebar-tab="settings" type="button">Settings</button></nav>
+    <nav class="cad-toolbar" aria-label="CAD commands"><button class="active" data-command="Select" type="button">Select</button><button data-command="Sketch" type="button">Sketch</button><button data-command="Dimension" type="button">Dimension</button><button data-command="Extrude" type="button">Extrude</button><button data-command="Revolve" type="button">Revolve</button><button data-command="Cut" type="button">Cut</button><button data-command="Fillet" type="button">Fillet</button><button data-command="Shell" type="button">Shell</button><button data-command="Pattern" type="button">Pattern</button></nav>
+    <nav class="model-actions" aria-label="Modeling actions"><button data-model-action="box" type="button">Box</button><button data-model-action="cylinder" type="button">Cylinder</button><button data-model-action="sphere" type="button">Sphere</button><button data-model-action="move" type="button">Move</button><button data-model-action="rotate" type="button">Rotate</button><button data-model-action="scale" type="button">Scale</button><button data-model-action="duplicate" type="button">Duplicate</button><button data-model-action="delete" type="button">Delete</button><button data-model-action="solidworks" type="button">Send to SolidWorks</button><button id="open-drafting" type="button">Engineering drawing</button></nav>
+    <div class="cad-group open"><button class="group-row" data-part="assembly" type="button">Robot arm assembly</button><div class="group-content">
+      <div class="cad-group open"><button class="group-row" data-part="base" type="button">Base</button><div class="group-content" id="part-list">
+        <button class="cad-leaf" data-part="base" type="button">Front plane</button><button class="cad-leaf" data-part="base" type="button">Revolve 01</button><button class="cad-leaf" data-part="base" type="button">Fillet 01</button>
+      </div></div>
+      <div class="cad-group open"><button class="group-row" data-part="shoulder" type="button">Shoulder joint</button><div class="group-content">
+        <button class="cad-leaf" data-part="shoulder" type="button">Extrude 02</button><button class="cad-leaf" data-part="shoulder" type="button">Hole pattern</button>
+      </div></div>
+      <div class="cad-group open"><button class="group-row" data-part="upper" type="button">Upper arm</button><div class="group-content">
+        <button class="cad-leaf active" data-part="upper" type="button">Extrude 03</button><button class="cad-leaf" data-part="upper" type="button">Fillet 02</button>
+      </div></div>
+      <div class="cad-group"><button class="group-row" data-part="elbow" type="button">Elbow + forearm</button><div class="group-content"><button class="cad-leaf" data-part="elbow" type="button">Revolve 02</button><button class="cad-leaf" data-part="elbow" type="button">Joint pattern</button></div></div>
+      <div class="cad-group"><button class="group-row" data-part="wrist" type="button">Wrist + gripper</button><div class="group-content"><button class="cad-leaf" data-part="wrist" type="button">Wrist revolve</button><button class="cad-leaf" data-part="wrist" type="button">Gripper mirror</button></div></div>
+    </div></div>
+    <section class="dimension-editor" id="dimension-editor" hidden><button class="dimension-heading" id="dimension-heading" type="button">Dimensions <span></span></button><div class="dimension-controls" id="dimension-controls"></div></section>
+    <section class="settings-pane" aria-label="Viewport settings">
+      <p>Viewport</p>
+      <label><span>Grid</span><input id="setting-grid" type="checkbox" checked><i></i></label>
+      <label><span>Model edges</span><input id="setting-edges" type="checkbox" checked><i></i></label>
+      <label><span>Shadows</span><input id="setting-shadows" type="checkbox" checked><i></i></label>
+      <label><span>Snap to grid</span><input id="setting-snap" type="checkbox"><i></i></label>
+      <p>Interaction</p>
+      <label class="setting-select"><span>Snap distance</span><select id="setting-snap-size"><option value="0.1">0.1</option><option value="0.5" selected>0.5</option><option value="1">1.0</option><option value="5">5.0</option></select></label>
+      <label class="setting-select"><span>Units</span><select id="setting-units"><option selected>mm</option><option>cm</option><option>in</option></select></label>
+    </section>
+  </aside>
+  <section class="chat-panel" id="chat-panel" aria-label="Chat with cady">
+    <header class="chat-header" id="chat-drag"><button id="chat-close" type="button" aria-label="Minimize chat">−</button></header>
+    <div class="chat-messages" id="chat-messages"><p class="cady-message">What would you like help with?</p></div>
+    <form class="chat" id="chat"><input id="prompt" aria-label="Ask cady for help" placeholder="ask cady for help…" autocomplete="off"><button class="chat-action" type="button" aria-label="Voice input"><svg viewBox="0 0 24 24"><path d="M9 5a3 3 0 016 0v6a3 3 0 01-6 0zM6 11a6 6 0 0012 0M12 17v4M9 21h6"/></svg></button><button class="chat-action send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M12 19V5M7 10l5-5 5 5"/></svg></button></form>
+  </section>
+  <section class="drafting-workspace" id="drafting-workspace" aria-label="Engineering drawing workspace" hidden>
+    <header class="drafting-header"><div><span>DRAWING</span><strong id="drawing-name">Untitled drawing</strong></div><nav><button id="drawing-import" type="button">Import STEP</button><button id="drawing-export" type="button">Export SVG</button><button id="drawing-print" type="button">Print / PDF</button><button id="drawing-close" type="button" aria-label="Close drawing">×</button></nav></header>
+    <input id="drawing-file" type="file" accept=".step,.stp,model/step" hidden>
+    <aside class="drafting-settings">
+      <label>Template<select id="drawing-template"><option value="iso-a4">ISO A4 landscape</option><option value="iso-a3">ISO A3 landscape</option><option value="ansi-b">ANSI B landscape</option></select></label>
+      <label>Units<select id="drawing-units"><option>mm</option><option>in</option></select></label>
+      <label>General tolerance<select id="drawing-tolerance"><option value="ISO 2768-m">ISO 2768-m</option><option value="ISO 2768-f">ISO 2768-f</option><option value="±0.10 mm">±0.10 mm</option><option value="±0.25 mm">±0.25 mm</option></select></label>
+      <fieldset><legend>Automatic views</legend><label><input type="checkbox" data-drawing-view="front" checked> Front</label><label><input type="checkbox" data-drawing-view="top" checked> Top</label><label><input type="checkbox" data-drawing-view="right" checked> Right</label><label><input type="checkbox" data-drawing-view="iso" checked> Isometric</label></fieldset>
+      <fieldset><legend>GD&amp;T callouts</legend><label><input type="checkbox" data-gdt="position" checked> Position ⌖</label><label><input type="checkbox" data-gdt="flatness"> Flatness ▱</label><label><input type="checkbox" data-gdt="perpendicularity"> Perpendicularity ⟂</label></fieldset>
+      <label>Drawing number<input id="drawing-number" value="DWG-001"></label><label>Revision<input id="drawing-revision" value="A"></label>
+      <button class="generate-drawing" id="generate-drawing" type="button">Regenerate drawing</button>
+    </aside>
+    <div class="drawing-stage"><div class="drawing-paper" id="drawing-paper"></div></div>
+  </section>
+  <section class="cursor-guide" id="cursor-guide" aria-live="polite" aria-label="Guided CAD walkthrough" hidden>
+    <div class="guide-package" id="guide-package">
+      <img class="guide-cursor-art" src="./cursor/cady-guide-cursor.svg" alt="">
+    </div>
+  </section><p class="toast" id="toast"></p>
+</main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"}}</script><script type="module" src="./app.js?v=fusion-setup-1"></script></body></html>

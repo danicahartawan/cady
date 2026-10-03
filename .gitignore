@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+node_modules/
+exa-results/
+berd-clone/
+.DS_Store

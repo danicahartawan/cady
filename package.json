@@ -1,0 +1,21 @@
+{
+  "name": "cady",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "build:kernel": "mkdir -p vendor && esbuild cad-kernel-entry.js --bundle --format=esm --platform=browser --external:node:* --outfile=vendor/cad-kernel.js && cp node_modules/replicad-opencascadejs/dist/replicad_single.wasm vendor/replicad_single.wasm",
+    "test": "node --check app.js && node cad-command-bus.test.mjs && node command-surface.test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "replicad": "^1.1.0",
+    "replicad-opencascadejs": "^1.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
+}
